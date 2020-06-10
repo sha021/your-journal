@@ -4,9 +4,9 @@ try:
     import os
     from flask import (Flask, request, make_response)
 except Exception as e:
-    print("Module missing {}".format(e))
+    print('Module missing {}'.format(e))
 
-#Flask app should start in global layour
+# Flask app should start in global layour
 app = Flask(__name__)
 
 
@@ -19,7 +19,7 @@ app = Flask(__name__)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    if request.method == "POST":
+    if request.method == 'POST':
         req = request.get_json(silent=True, force=True)
         res = processRequest(req)
         res = json.dumps(res, indent=4)
@@ -29,7 +29,7 @@ def webhook():
 
 def processRequest(req):
     #Get all the Query Parameter
-    query_response = req["queryResult"]
+    query_response = req['queryResult']
     print(query_response)
     text = query_response.get('queryText', None)
     parameters = query_response.get('parameters', None)
@@ -37,12 +37,12 @@ def processRequest(req):
     return res
 
 def getData():
-    speech = "HELLO FROM CHATBOT"
+    speech = 'HELLO FROM CHATBOT'
     return {
-        "fulfillmentText":speech,
+        'fulfillmentText': speech,
     }
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT',5000))
-    print("Starting app on port %d" %(port))
+    port = int(os.getenv('PORT', 5000))
+    print('Starting app on port %d' %(port))
     app.run(debug=True, port=port, host='0.0.0.0')
