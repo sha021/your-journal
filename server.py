@@ -16,7 +16,6 @@ app = Flask(__name__)
 # -----------> Process requests
 # ---------------> getData()
 
-
 @app.route('/webhook', methods=['POST'])
 def webhook():
     if request.method == 'POST':
@@ -33,6 +32,9 @@ def processRequest(req):
     print(query_response)
     text = query_response.get('queryText', None)
     parameters = query_response.get('parameters', None)
+    # if parameters['journal'] == 'journal' :
+    #     print('recording should start')
+    #     record = 1
     res = getData()
     return res
 
@@ -45,4 +47,4 @@ def getData():
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     print('Starting app on port %d' %(port))
-    app.run(debug=True, port=port, host='0.0.0.0')
+    app.run(debug=True, port=port, host='localhost')
