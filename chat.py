@@ -10,7 +10,7 @@ BOT_NAME = 'Your Journal'
 CLOSING = 'bye' #r'(\[gG\]ood\[\s-\]?)?\[bB\]ye.*'
 
 def getUser():
-    name = input('Please enter your name: ')
+    name = input('\nPlease enter your name: ')
     if not name:
         return 'Guest'
     else:
@@ -41,7 +41,7 @@ def readJournal(firebaseApp, name):
                 print(f'{BOT_NAME}: Please say either "next" to continue, "delete" to remove, or "stop" to quit reading.')
         if command == 'delete':
             firebaseApp.delete(f'JournalEntries/{name}', entry)
-            print(f'{BOT_NAME}: The above Journal entry has been deleted.')
+            print(f'{BOT_NAME}: I sucessfully deleted entry {entry} from your Journal.')
         elif command == 'stop':
             print(f'{BOT_NAME}: No problem! I\'ll close your Journal for now.')
             return
@@ -95,29 +95,25 @@ def runDialog():
         if response.query_result.intent.display_name == 'Visit Journal Entry':
             readJournal(firebaseApp, name)
             continue
-        # print()
-        # print('Query text:', response.query_result.query_text)
-        # print('Detected intent:', response.query_result.intent.display_name)
-        # print('Detected intent confidence:', response.query_result.intent_detection_confidence)
         print(f'{BOT_NAME}:', response.query_result.fulfillment_text)
 
-    if not len(conversation):
-        print('\nConversation not recorded.')
-        return
-    else:
-        print('\nConversation: ', conversation, sep='')
-
+    print(f'\n{BOT_NAME}: Oh, before you go, I wanted to say this...')
+    print(f'{BOT_NAME}:', end=' ')
     text = ' '.join(conversation)
-    sentimentAnalysis.analyzeText(text)
-    # text2 = 'The Dog is a very faithful animal. Having a dog as a pet brings a moment of joy and excitement in our life. Almost everyone wants to have a cute dog in his home. Breeding a dog requires the best care to make him healthy and happy'
-    classification.classify(text)
-    
+
+    tup = sentimentAnalysis.analyze(text)
+    summary = classification.classify(text)
+    sentiment = tup[0]
+    quoteOfDay = tup[1]
     entry = {
         'Date & Time': timeStamp,
         'Conversation': conversation,
+        'Sentiment': sentiment,
+        'Quote of the Day': quoteOfDay,
+        'Summary': summary,
     }
     result = firebaseApp.post(f'JournalEntries/{name}', entry)
-    print('\nEntry:', result)
+    print(f'{BOT_NAME}: Also, I sucessfully added entry {result["name"]} to your Journal!\n')
 
 if __name__ == '__main__':
     runDialog() 
