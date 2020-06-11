@@ -6,12 +6,42 @@ from google.api_core.exceptions import InvalidArgument
 from firebase import firebase
 from datetime import datetime
 
+BOT_NAME = 'Your Journal'
+
 def getUser():
     name = input('Please enter your name: ')
     if not name:
         return 'Guest'
     else:
         return name
+
+def readJournal(firebaseApp, name):
+    print(f'\n{BOT_NAME}: Sure! I\'ll start with the first page of your Journal.')
+    print(f'{BOT_NAME}: Please say either "next" to continue or "stop" to quit reading.')
+    journal = firebaseApp.get(f'JournalEntries/{name}', '')
+    for entry in journal:
+        print('\nDate & Time:', journal[entry]['Date & Time'])
+        print('Conversation:', )
+        for sentence in journal[entry]['Conversation']:
+            print('    ', sentence)
+        # Backwards compatibility (before Sentiment Analysis & Quote of the Day were implemented)
+        if 'Quote of the Day' in journal[entry]:
+            print('Quote of the Day:', journal[entry]['Quote of the Day'])
+        if 'Sentiment' in journal[entry]:
+            print('Sentiment:', journal[entry]['Sentiment'])
+
+        command = ''
+        while True:
+            command = input('\nYou: ')
+            if command == 'next' or command == 'stop':
+                break
+            else:
+                print(f'\n{BOT_NAME}: Please say either "next" to continue or "stop" to quit reading.')
+        if command == 'stop':
+            print(f'\n{BOT_NAME}: No problem! I\'ll close your Journal for now.')
+            return
+    
+    print(f'\n{BOT_NAME}: That\'s every page of your journal! ')
 
 def runDialog():
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'privateKey.json'
@@ -42,23 +72,35 @@ def runDialog():
             response = session_client.detect_intent(session=session, query_input=query_input)
         except InvalidArgument:
             raise
-        if (record == False and response.query_result.intent.display_name == 'record'):
-            print('\nYour Journal:', response.query_result.fulfillment_text)
+        # Start recording
+        if (record == False and response.query_result.intent.display_name == 'Record Journal Entry'):
+            print('RESPONSE::::::::', response)
+            print(f'\n{BOT_NAME}:', response.query_result.fulfillment_text)
             record = True
             continue
+        # End session
         if (text_to_be_analyzed == 'bye'):
-            print('\nYour Journal:', response.query_result.fulfillment_text)
+            print(f'\n{BOT_NAME}:', response.query_result.fulfillment_text)
             continue
+        # Record statment
         if (record):
             if (text_to_be_analyzed[-1] != r'\[(\.\?\!\*\)\+\/)\]'):
                 text_to_be_analyzed += '.'
             conversation.append(text_to_be_analyzed)
+        # Visit entry
+        if response.query_result.intent.display_name == 'Visit Journal Entry':
+            readJournal(firebaseApp, name)
+            continue
         # print('\nQuery text:', response.query_result.query_text)
         print('\nDetected intent:', response.query_result.intent.display_name)
         print('Detected intent confidence:', response.query_result.intent_detection_confidence)
-        print('\nYour Journal:', response.query_result.fulfillment_text)
+        print(f'\n{BOT_NAME}:', response.query_result.fulfillment_text)
 
-    print('\nConversation: ', conversation, sep='')
+    if not len(conversation):
+        print('Conversation not recorded.')
+        return
+    else:
+        print('\nConversation: ', conversation, sep='')
 
     text = ' '.join(conversation)
     sentimentAnalysis.analyzeText(text)
