@@ -20,9 +20,8 @@ def runDialog():
 
     # Initialize Firebase Entry
     firebaseApp = firebase.FirebaseApplication('https://journal-wkwhjy.firebaseio.com/', None)
-    timeStamp = datetime.now().strftime(f'%d-%m-%Y+%H:%M:%S')
+    timeStamp = datetime.now().strftime(f'%b-%d-%Y at %H:%M:%S')
     name = getUser()
-    section = name + '/' + timeStamp
 
     text_to_be_analyzed = ''
     conversation = []
@@ -50,13 +49,17 @@ def runDialog():
         print('Detected intent confidence:', response.query_result.intent_detection_confidence)
         print('\nYour Journal:', response.query_result.fulfillment_text)
 
-    print('\n', conversation, sep='')
+    print('\nConversation: ', conversation, sep='')
     # conversationText = '. '.join(conversation)
     # print(conversationText)
     
+    entry = {
+        'Date & Time': timeStamp,
+        'Conversation': conversation,
+    }
 
-    result = firebaseApp.post(f'JournalEntries/{section}', conversation)
-    print('Entry Name:', result)
+    result = firebaseApp.post(f'JournalEntries/{name}', entry)
+    print('\nEntry Name:', result)
 
 if __name__ == '__main__':
     runDialog() 
