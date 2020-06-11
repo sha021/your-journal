@@ -26,7 +26,9 @@ def readJournal(firebaseApp, name):
         print('Conversation:', )
         for sentence in journal[entry]['Conversation']:
             print('    ', sentence)
-        # Backwards compatibility (before Sentiment Analysis & Quote of the Day were implemented)
+        # Backwards compatibility (before Summary, Sentiment Analysis, & Quote of the Day were implemented)
+        if 'Summary' in journal[entry]:
+            print('Summary:', journal[entry]['Summary'])
         if 'Quote of the Day' in journal[entry]:
             print('Quote of the Day:', journal[entry]['Quote of the Day'])
         if 'Sentiment' in journal[entry]:
@@ -96,6 +98,11 @@ def runDialog():
             readJournal(firebaseApp, name)
             continue
         print(f'{BOT_NAME}:', response.query_result.fulfillment_text)
+
+    # Nothing to Analyze
+    if not conversation:
+        print()
+        exit()
 
     print(f'\n{BOT_NAME}: Oh, before you go, I wanted to say this...')
     print(f'{BOT_NAME}:', end=' ')
