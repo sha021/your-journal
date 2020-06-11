@@ -7,6 +7,7 @@ from firebase import firebase
 from datetime import datetime
 
 BOT_NAME = 'Your Journal'
+CLOSING = 'bye' #r'(\[gG\]ood\[\s-\]?)?\[bB\]ye.*'
 
 def getUser():
     name = input('Please enter your name: ')
@@ -16,10 +17,11 @@ def getUser():
         return name
 
 def readJournal(firebaseApp, name):
-    print(f'\n{BOT_NAME}: Sure! I\'ll start with the first page of your Journal.')
-    print(f'{BOT_NAME}: Please say either "next" to continue or "stop" to quit reading.')
+    print(f'{BOT_NAME}: Sure! I\'ll start with the most recent page of your Journal.')
+    print(f'{BOT_NAME}: Please say either "next" to continue, "delete" to remove, or "stop" to quit reading.')
+
     journal = firebaseApp.get(f'JournalEntries/{name}', '')
-    for entry in journal:
+    for entry in reversed(journal.keys()):
         print('\nDate & Time:', journal[entry]['Date & Time'])
         print('Conversation:', )
         for sentence in journal[entry]['Conversation']:
@@ -33,15 +35,18 @@ def readJournal(firebaseApp, name):
         command = ''
         while True:
             command = input('\nYou: ')
-            if command == 'next' or command == 'stop':
+            if command == 'next' or command == 'delete' or command == 'stop':
                 break
             else:
-                print(f'\n{BOT_NAME}: Please say either "next" to continue or "stop" to quit reading.')
-        if command == 'stop':
-            print(f'\n{BOT_NAME}: No problem! I\'ll close your Journal for now.')
+                print(f'{BOT_NAME}: Please say either "next" to continue, "delete" to remove, or "stop" to quit reading.')
+        if command == 'delete':
+            firebaseApp.delete(f'JournalEntries/{name}', entry)
+            print(f'{BOT_NAME}: The above Journal entry has been deleted.')
+        elif command == 'stop':
+            print(f'{BOT_NAME}: No problem! I\'ll close your Journal for now.')
             return
     
-    print(f'\n{BOT_NAME}: That\'s every page of your journal! ')
+    print(f'{BOT_NAME}: That\'s every page of your journal! ')
 
 def runDialog():
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'privateKey.json'
@@ -60,10 +65,10 @@ def runDialog():
     record = False
 
     print('\n======================= Your Journal ========================')
-    print('-------- Type "bye" if you want to close the Journal --------\n')
+    print('-------- Type "bye" if you want to close the Journal --------')
 
-    while text_to_be_analyzed != 'bye':
-        text_to_be_analyzed = input('You: ')
+    while text_to_be_analyzed != CLOSING:
+        text_to_be_analyzed = input('\nYou: ')
         session_client = dialogflow.SessionsClient()
         session = session_client.session_path(DIALOGFLOW_PROJECT_ID, SESSION_ID)
         text_input = dialogflow.types.TextInput(text=text_to_be_analyzed, language_code=DIALOGFLOW_LANGUAGE_CODE)
@@ -74,13 +79,12 @@ def runDialog():
             raise
         # Start recording
         if (record == False and response.query_result.intent.display_name == 'Record Journal Entry'):
-            print('RESPONSE::::::::', response)
-            print(f'\n{BOT_NAME}:', response.query_result.fulfillment_text)
+            print(f'{BOT_NAME}:', response.query_result.fulfillment_text)
             record = True
             continue
         # End session
-        if (text_to_be_analyzed == 'bye'):
-            print(f'\n{BOT_NAME}:', response.query_result.fulfillment_text)
+        if (text_to_be_analyzed == CLOSING):
+            print(f'{BOT_NAME}:', response.query_result.fulfillment_text)
             continue
         # Record statment
         if (record):
@@ -91,13 +95,14 @@ def runDialog():
         if response.query_result.intent.display_name == 'Visit Journal Entry':
             readJournal(firebaseApp, name)
             continue
-        # print('\nQuery text:', response.query_result.query_text)
-        print('\nDetected intent:', response.query_result.intent.display_name)
-        print('Detected intent confidence:', response.query_result.intent_detection_confidence)
-        print(f'\n{BOT_NAME}:', response.query_result.fulfillment_text)
+        # print()
+        # print('Query text:', response.query_result.query_text)
+        # print('Detected intent:', response.query_result.intent.display_name)
+        # print('Detected intent confidence:', response.query_result.intent_detection_confidence)
+        print(f'{BOT_NAME}:', response.query_result.fulfillment_text)
 
     if not len(conversation):
-        print('Conversation not recorded.')
+        print('\nConversation not recorded.')
         return
     else:
         print('\nConversation: ', conversation, sep='')
@@ -111,9 +116,8 @@ def runDialog():
         'Date & Time': timeStamp,
         'Conversation': conversation,
     }
-
     result = firebaseApp.post(f'JournalEntries/{name}', entry)
-    print('\nEntry Name:', result)
+    print('\nEntry:', result)
 
 if __name__ == '__main__':
     runDialog() 
