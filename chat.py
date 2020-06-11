@@ -53,18 +53,14 @@ def runDialog():
             if (text_to_be_analyzed[-1] != r'\[(\.\?\!\*\)\+\/)\]'):
                 text_to_be_analyzed += '.'
             conversation.append(text_to_be_analyzed)
-            print('Adding to conversation...')
-        # print('\nQuery text:', response.query_result.query_text)
-        print('\nDetected intent:', response.query_result.intent.display_name)
-        print('Detected intent confidence:', response.query_result.intent_detection_confidence)
+
         print('\nYour Journal:', response.query_result.fulfillment_text)
 
-    print('\nConversation: ', conversation, sep='')
-
     text = ' '.join(conversation)
+
+    print('Oh, before you go, I wanted to say this...')
     tup = sentimentAnalysis.analyze(text)
     summary = classification.classify(text)
-    print(summary)
     sentiment = tup[0]
     quoteOfDay = tup[1]
     entry = {
