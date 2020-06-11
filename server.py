@@ -39,7 +39,7 @@ def processRequest(req):
     return res
 
 def getData():
-    speech = 'HELLO FROM CHATBOT'
+    speech = '~HELLO FROM CHATBOT'
     return {
         'fulfillmentText': speech,
     }
