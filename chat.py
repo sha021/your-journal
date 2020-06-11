@@ -1,5 +1,7 @@
 import os
 import dialogflow
+import sentimentAnalysis 
+import classification
 from google.api_core.exceptions import InvalidArgument
 from firebase import firebase
 from datetime import datetime
@@ -40,9 +42,16 @@ def runDialog():
             response = session_client.detect_intent(session=session, query_input=query_input)
         except InvalidArgument:
             raise
-        if (response.query_result.intent.display_name == 'record'):
+        if (record == False and response.query_result.intent.display_name == 'record'):
+            print('\nYour Journal:', response.query_result.fulfillment_text)
             record = True
+            continue
+        if (text_to_be_analyzed == 'bye'):
+            print('\nYour Journal:', response.query_result.fulfillment_text)
+            continue
         if (record):
+            if (text_to_be_analyzed[-1] != r'\[(\.\?\!\*\)\+\/)\]'):
+                text_to_be_analyzed += '.'
             conversation.append(text_to_be_analyzed)
         # print('\nQuery text:', response.query_result.query_text)
         print('\nDetected intent:', response.query_result.intent.display_name)
@@ -50,8 +59,11 @@ def runDialog():
         print('\nYour Journal:', response.query_result.fulfillment_text)
 
     print('\nConversation: ', conversation, sep='')
-    # conversationText = '. '.join(conversation)
-    # print(conversationText)
+
+    text = ' '.join(conversation)
+    sentimentAnalysis.analyzeText(text)
+    # text2 = 'The Dog is a very faithful animal. Having a dog as a pet brings a moment of joy and excitement in our life. Almost everyone wants to have a cute dog in his home. Breeding a dog requires the best care to make him healthy and happy'
+    classification.classify(text)
     
     entry = {
         'Date & Time': timeStamp,
