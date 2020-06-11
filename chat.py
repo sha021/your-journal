@@ -1,6 +1,7 @@
 import os
 import dialogflow
 from google.api_core.exceptions import InvalidArgument
+from firebase import firebase
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'privateKey.json'
 
@@ -8,8 +9,9 @@ DIALOGFLOW_PROJECT_ID = 'journal-wkwhjy'
 DIALOGFLOW_LANGUAGE_CODE = 'en'
 SESSION_ID = 'me'
 
+conversation = ''
 text_to_be_analyzed = ''
-
+record = 0
 print('======================= Your Journal ========================')
 print('--------- Type bye if you want to close the Journal ---------')
 
@@ -24,6 +26,12 @@ while (text_to_be_analyzed != 'bye') :
     except InvalidArgument:
         raise
     print('Query text:', response.query_result.query_text)
+    if (response.query_result.intent.display_name == 'record'):
+        record = 1
+    if (record > 0):
+        conversation += text_to_be_analyzed + '\n'
     print('Detected intent:', response.query_result.intent.display_name)
     print('Detected intent confidence:', response.query_result.intent_detection_confidence)
     print('Fulfillment text:', response.query_result.fulfillment_text)
+
+print(conversation)
